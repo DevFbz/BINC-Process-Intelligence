@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BINC — Process Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="binc.css">
+</head>
+<body>
+<div id="app">
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sb-brand">
+    <span class="sb-logo">BINC</span>
+    <div class="sb-sub">Process<br>Intelligence</div>
+    <button class="sb-tog" onclick="toggleSB()" title="Recolher">◀</button>
+  </div>
+  <div class="sb-sect">Ferramentas</div>
+  <nav class="sb-nav">
+    <div class="nv on" data-p="home" onclick="goTo('home',this)"><span class="nv-ic">⬡</span><span class="nv-lb">Início</span></div>
+    <div class="nv" data-p="mapa" onclick="goTo('mapa',this)"><span class="nv-ic">🗺️</span><span class="nv-lb">Mapa de Campos</span></div>
+    <div class="nv" data-p="fluxo" onclick="goTo('fluxo',this)"><span class="nv-ic">🔄</span><span class="nv-lb">Fluxo AS-IS</span></div>
+    <div class="nv" data-p="script" onclick="goTo('script',this)"><span class="nv-ic">📝</span><span class="nv-lb">Script BPM</span></div>
+    <div class="nv" data-p="chat" onclick="goTo('chat',this)"><span class="nv-ic">🤖</span><span class="nv-lb">Binc IA</span></div>
+    <div class="nv" data-p="ideias" onclick="goTo('ideias',this)"><span class="nv-ic">💡</span><span class="nv-lb">Ideias & Projetos</span></div>
+  </nav>
+  <div class="sb-ft">v2.1 · Process Intelligence</div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <div>
+      <div class="tb-t" id="tbt">Início</div>
+      <div class="tb-s" id="tbs">Bem-vindo ao BINC</div>
+    </div>
+    <div id="tb-acts"></div>
+  </div>
+
+  <div id="content">
+
+    <!-- HOME -->
+    <div id="p-home" class="pnl on">
+      <div class="hw">
+        <div class="hmark">BINC</div>
+        <p class="hdesc">Plataforma para gestão de processos e projetos. Selecione uma ferramenta no menu lateral.</p>
+        <div class="hgrid">
+          <div class="hc" onclick="goTo('mapa')"><div class="hc-i">🗺️</div><div class="hc-n">Mapa de Campos</div><div class="hc-d">Campos por etapa</div></div>
+          <div class="hc" onclick="goTo('fluxo')"><div class="hc-i">🔄</div><div class="hc-n">Fluxo AS-IS</div><div class="hc-d">Fluxogramas</div></div>
+          <div class="hc" onclick="goTo('script')"><div class="hc-i">📝</div><div class="hc-n">Script BPM</div><div class="hc-d">Template de script</div></div>
+          <div class="hc" onclick="goTo('chat')"><div class="hc-i">🤖</div><div class="hc-n">Binc IA</div><div class="hc-d">Expert em API JS</div></div>
+          <div class="hc" onclick="goTo('ideias')"><div class="hc-i">💡</div><div class="hc-n">Ideias & Projetos</div><div class="hc-d">Catálogo de melhorias</div></div>
+          <div class="hc" style="cursor:default;"><div class="hc-i">💾</div><div class="hc-n">Auto-save</div><div class="hc-d">Dados locais</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAPA -->
+    <div id="p-mapa" class="pnl">
+      <div class="mleg">
+        <div class="mli"><div class="mld cv"></div>Visível · Editável</div>
+        <div class="mli"><div class="mld cs"></div>Somente leitura</div>
+        <div class="mli"><div class="mld co"></div>Oculto</div>
+        <div class="mli"><div class="mll cc"></div>Condicional</div>
+        <div class="mli"><div class="mld cp"></div>Parcial</div>
+      </div>
+      <div class="etabs" id="etabs"></div>
+      <div class="etinfo" id="etinfo"></div>
+      <div class="mcanvas" id="mcanvas"></div>
+    </div>
+
+    <!-- SCRIPT -->
+    <div id="p-script" class="pnl">
+      <div class="sw">
+        <div class="sform">
+          <div class="sform-t">📝 Gerador de Script BPM</div>
+          <div class="sgrid">
+            <div class="fg"><label>Nome do Arquivo</label><input class="inp" id="sc-arq" placeholder="h13_p_tratamento_avaria" oninput="buildScript()"></div>
+            <div class="fg"><label>Nome do Processo</label><input class="inp" id="sc-proc" placeholder="Chamado para Tratamento de Avaria" oninput="buildScript()"></div>
+            <div class="fg"><label>Número do Processo</label><input class="inp" id="sc-num" placeholder="13" oninput="buildScript()"></div>
+            <div class="fg"><label>Data</label><input class="inp" id="sc-data" type="date" oninput="buildScript()"></div>
+            <div class="fg s2">
+              <label>Etapas — uma por linha &nbsp;<span style="color:var(--t3);font-size:.85em;">(NOME_ETAPA: NUMERO ou só NOME)</span></label>
+              <textarea class="ta" id="sc-ets" rows="7"
+                placeholder="SOLICITAR: 1&#10;COMPLEMENTAR_INFORMACOES: 7&#10;VALIDAR_SOLICITACAO: 3&#10;EXAMINAR_MATERIAL: 4&#10;AVALIAR_ATENDIMENTO: 5&#10;CANCELAR_SOLICITACAO: 2&#10;FINALIZAR: 6"
+                oninput="buildScript()"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="sout">
+          <div class="sout-h">
+            <span class="sout-fn" id="sc-fn">script.js</span>
+            <button class="btn sm" onclick="copyScript()">⎘ Copiar</button>
+            <button class="btn sm prim" onclick="dlScript()">⬇ Download</button>
+          </div>
+          <div class="scode" id="sc-out"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FLUXO -->
+    <div id="p-fluxo" class="pnl">
+      <div class="flw">
+        <div class="fps">
+          <div class="fpb">
+            <div class="fpt">Elementos</div>
+            <div class="shpl">
+              <div class="shi" draggable="true" data-shape="inicio" ondragstart="dstart(event)"><svg width="20" height="20"><circle cx="10" cy="10" r="8" fill="none" stroke="#00d4b0" stroke-width="1.5"/></svg>Início/Fim</div>
+              <div class="shi" draggable="true" data-shape="processo" ondragstart="dstart(event)"><svg width="22" height="16"><rect x="1" y="1" width="20" height="14" rx="2" fill="none" stroke="#666" stroke-width="1.5"/></svg>Processo</div>
+              <div class="shi" draggable="true" data-shape="decisao" ondragstart="dstart(event)"><svg width="22" height="20"><polygon points="11,1 21,10 11,19 1,10" fill="none" stroke="#f5a623" stroke-width="1.5"/></svg>Decisão</div>
+              <div class="shi" draggable="true" data-shape="documento" ondragstart="dstart(event)"><svg width="22" height="22"><path d="M1,1 L21,1 L21,16 Q11,22 1,16 Z" fill="none" stroke="#5b9cf6" stroke-width="1.5"/></svg>Documento</div>
+              <div class="shi" draggable="true" data-shape="manual" ondragstart="dstart(event)"><svg width="22" height="18"><path d="M1,15 L5,2 L21,2 L21,15 Z" fill="none" stroke="#9b8afb" stroke-width="1.5"/></svg>Manual</div>
+            </div>
+          </div>
+          <div class="fpb">
+            <div class="fpt">Ações</div>
+            <div class="fpbtns">
+              <button class="fpb2" id="conn-btn" onclick="toggleConn()">🔗 Conectar nós</button>
+              <button class="fpb2" onclick="undoLast()">↩ Desfazer</button>
+              <button class="fpb2" onclick="clearFluxo()">🗑 Limpar</button>
+            </div>
+          </div>
+          <div class="fpb">
+            <div class="fpt">Salvar</div>
+            <div class="fpbtns">
+              <button class="fpb2" onclick="exportSVG()">⬇ SVG</button>
+              <button class="fpb2" onclick="saveFluxo()">💾 Salvar</button>
+            </div>
+          </div>
+        </div>
+        <div class="fcanv" id="fcanv" ondragover="event.preventDefault()" ondrop="fdrop(event)">
+          <svg id="fsvg" xmlns="http://www.w3.org/2000/svg">
+            <defs><marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#333"/></marker></defs>
+            <g id="fconns"></g><g id="fnodes"></g>
+          </svg>
+          <div style="position:absolute;bottom:.7rem;right:.8rem;font-family:var(--fm);font-size:.55rem;color:var(--t3);">Arraste · Clique duplo para editar</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAT -->
+    <div id="p-chat" class="pnl">
+      <div class="chat-header">
+        <div class="chat-header-av">AI</div>
+        <div class="chat-header-info">
+          <div class="chat-h-name">Binc IA BPM</div>
+          <div class="chat-h-status"><span class="chat-h-dot"></span>Expert em API JavaScript</div>
+        </div>
+        <button class="chat-clear" onclick="clearChat()">↺ Limpar conversa</button>
+      </div>
+      <div class="chat-wrap">
+        <div class="chat-msgs" id="chat-msgs"></div>
+        <div class="chat-suggests" id="chat-suggests"></div>
+      </div>
+      <div class="chat-bar">
+        <textarea id="chat-input" placeholder="Pergunte sobre a API JavaScript do Lecom BPM..." rows="1" onkeydown="chatKeydown(event)" oninput="autoResize(this)"></textarea>
+        <button class="chat-send" onclick="sendChat()">
+          <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- IDEIAS -->
+    <div id="p-ideias" class="pnl">
+      <div class="iw" id="ilist"></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- MODALS -->
+<div class="mbg" id="fmod" onclick="closeFM(event)">
+  <div class="mc" onclick="event.stopPropagation()">
+    <h3 id="fmt">＋ Novo Campo</h3>
+    <input type="hidden" id="feg"><input type="hidden" id="fef">
+    <div class="fg"><label>ID do Campo</label><input class="inp" id="fid" placeholder="NOME_CAMPO" style="font-family:var(--fm);" oninput="this.value=this.value.toUpperCase().replace(/\s/g,'_')"></div>
+    <div class="fg"><label>Label / Descrição</label><input class="inp" id="fla" placeholder="Ex: Nome do Solicitante"></div>
+    <div class="fg"><label>Visibilidade</label>
+      <select class="sel" id="fvis">
+        <option value="v">● Visível · Editável</option>
+        <option value="s">● Somente leitura</option>
+        <option value="o">● Oculto</option>
+        <option value="c">─ Condicional</option>
+        <option value="p">● Parcial</option>
+      </select>
+    </div>
+    <div class="mc-acts">
+      <button class="btn sm dng" id="fdel" onclick="delField()">Excluir</button>
+      <button class="btn sm" onclick="closeFM()">Cancelar</button>
+      <button class="btn sm prim" onclick="saveField()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="mbg" id="etmod" onclick="closeEM(event)">
+  <div class="mc" style="width:420px;" onclick="event.stopPropagation()">
+    <h3>＋ Adicionar Etapas</h3>
+    <div class="fg"><label>Nome único (uma etapa)</label><input class="inp" id="et1" placeholder="VALIDAR_SOLICITACAO" oninput="this.value=this.value.toUpperCase().replace(/\s/g,'_')"></div>
+    <div style="display:flex;align-items:center;gap:.65rem;margin:.45rem 0;">
+      <div style="flex:1;height:1px;background:var(--b1);"></div>
+      <span style="font-size:.62rem;color:var(--t3);">ou múltiplas de uma vez</span>
+      <div style="flex:1;height:1px;background:var(--b1);"></div>
+    </div>
+    <div class="fg"><label>Várias etapas — uma por linha</label>
+      <textarea class="ta" id="etbulk" rows="7" placeholder="SOLICITAR&#10;COMPLEMENTAR_INFORMACOES&#10;VALIDAR_SOLICITACAO&#10;EXAMINAR_MATERIAL&#10;AVALIAR_ATENDIMENTO&#10;CANCELAR_SOLICITACAO&#10;FINALIZAR"></textarea>
+    </div>
+    <div class="mc-acts">
+      <button class="btn sm" onclick="closeEM()">Cancelar</button>
+      <button class="btn sm prim" onclick="commitEts()">Criar Etapas</button>
+    </div>
+  </div>
+</div>
+
+<script src="binc-kb.js"></script>
+<script src="binc.js"></script>
+</body>
+</html>
