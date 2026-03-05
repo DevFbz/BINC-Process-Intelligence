@@ -1,4 +1,4 @@
-//  Binc IA — BASE DE CONHECIMENTO
+//  IA Binc — BASE DE CONHECIMENTO
 // ═══════════════════════════════════════════════════
 const KB = [
   {

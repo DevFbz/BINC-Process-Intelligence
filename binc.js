@@ -12,8 +12,9 @@ const PTITLES={
   mapa:['Mapa de Campos','Visualize e edite campos por etapa e grupo'],
   fluxo:['Fluxo AS-IS','Construa fluxogramas de processo'],
   script:['Script BPM','Gerador de script no padrão LECOM'],
-  chat:['Binc IA','Expert em API JavaScript do Lecom BPM 5.50'],
-  ideias:['Ideias & Projetos','Catálogo de melhorias e projetos']
+  chat:['IA Binc','Expert em API JavaScript do Lecom BPM 5.50'],
+  ideias:['Ideias & Projetos','Catálogo de melhorias e projetos'],
+  comp:['Comparador de Código','Diff visual e relatório de mudanças entre versões']
 };
 function goTo(id,el=null){
   document.querySelectorAll('.pnl').forEach(p=>p.classList.remove('on'));
@@ -28,7 +29,7 @@ function goTo(id,el=null){
           <button class="btn sm" onclick="addGroup()">＋ Grupo</button>
           <button class="btn sm" onclick="impMap()">⬆ Importar</button>
           <button class="btn sm" onclick="expMap()">⬇ JSON</button>`,
-    script:``,chat:``,fluxo:``,ideias:``,home:``
+    script:``,chat:``,fluxo:``,ideias:``,home:``,comp:``
   };
   document.getElementById('tb-acts').innerHTML=acts[id]||'';
   if(id==='mapa')renderMapa();
@@ -36,6 +37,7 @@ function goTo(id,el=null){
   if(id==='script'){initSc();buildScript();}
   if(id==='ideias')renderIdeias();
   if(id==='chat')initChat();
+  if(id==='comp')cmpReset();
 }
 let sbCol=false;
 function toggleSB(){
@@ -422,7 +424,7 @@ let chatInited = false;
 function initChat() {
   if (chatInited) return;
   chatInited = true;
-  addBotMsg(`Olá! Sou a **Binc IA**, especialista na API JavaScript do Lecom BPM 5.50.\n\nPosso te ajudar com:\n- Manipulação de campos e grupos\n- Eventos do Form e Grid\n- Grids: inserção, edição, remoção\n- Máscaras, validações e actions\n- Boas práticas e performance\n\nDigite sua dúvida ou escolha uma sugestão abaixo.`);
+  addBotMsg(`Olá! Sou a **IA Binc**, especialista na API JavaScript do Lecom BPM 5.50.\n\nPosso te ajudar com:\n- Manipulação de campos e grupos\n- Eventos do Form e Grid\n- Grids: inserção, edição, remoção\n- Máscaras, validações e actions\n- Boas práticas e performance\n\nDigite sua dúvida ou escolha uma sugestão abaixo.`);
   renderSuggests(SUGGESTIONS);
 }
 
@@ -583,3 +585,332 @@ document.addEventListener('keydown',e=>{
 //  BOOT
 // ═══════════════════════════════════════════════════
 buildScript();
+
+// ═══════════════════════════════════════════════════
+//  COMPARADOR DE CÓDIGO
+// ═══════════════════════════════════════════════════
+
+/* ── LCS diff ── */
+function lcsMatrix(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({length: m+1}, () => new Int32Array(n+1));
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1]+1 : Math.max(dp[i-1][j], dp[i][j-1]);
+  return dp;
+}
+
+function diffLines(linesA, linesB) {
+  const dp = lcsMatrix(linesA, linesB);
+  const result = [];
+  let i = linesA.length, j = linesB.length;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && linesA[i-1] === linesB[j-1]) {
+      result.unshift({type:'eq', a:linesA[i-1], b:linesB[j-1], ia:i-1, ib:j-1});
+      i--; j--;
+    } else if (j > 0 && (i === 0 || dp[i][j-1] >= dp[i-1][j])) {
+      result.unshift({type:'add', b:linesB[j-1], ib:j-1});
+      j--;
+    } else {
+      result.unshift({type:'rem', a:linesA[i-1], ia:i-1});
+      i--;
+    }
+  }
+  // merge consecutive rem+add into mod pairs
+  const merged = [];
+  for (let k = 0; k < result.length; k++) {
+    if (result[k].type === 'rem' && result[k+1] && result[k+1].type === 'add') {
+      merged.push({type:'mod', a:result[k].a, b:result[k+1].b, ia:result[k].ia, ib:result[k+1].ib});
+      k++;
+    } else merged.push(result[k]);
+  }
+  return merged;
+}
+
+/* ── Inline char diff for modified lines ── */
+function inlineDiff(a, b) {
+  const ca = [...a], cb = [...b];
+  const dp = lcsMatrix(ca, cb);
+  const resA = [], resB = [];
+  let i = ca.length, j = cb.length;
+  const seqA = [], seqB = [];
+  while (i > 0 || j > 0) {
+    if (i>0&&j>0&&ca[i-1]===cb[j-1]) {seqA.unshift({c:ca[i-1],t:'eq'});seqB.unshift({c:cb[j-1],t:'eq'});i--;j--;}
+    else if (j>0&&(i===0||dp[i][j-1]>=dp[i-1][j])) {seqB.unshift({c:cb[j-1],t:'add'});j--;}
+    else {seqA.unshift({c:ca[i-1],t:'rem'});i--;}
+  }
+  const toHtml = (seq, hlClass) => {
+    let html = '', inHL = false;
+    seq.forEach(({c, t}) => {
+      const isHL = t !== 'eq';
+      if (isHL && !inHL) { html += `<span class="${hlClass}">`; inHL = true; }
+      if (!isHL && inHL) { html += '</span>'; inHL = false; }
+      html += escH(c);
+    });
+    if (inHL) html += '</span>';
+    return html;
+  };
+  return {a: toHtml(seqA, 'ch-rem'), b: toHtml(seqB, 'ch-add')};
+}
+
+function escH(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ── Build side-by-side diff HTML ── */
+function buildDiffHTML(diff) {
+  let html = '';
+  diff.forEach((d, idx) => {
+    const ia = d.ia != null ? d.ia+1 : '';
+    const ib = d.ib != null ? d.ib+1 : '';
+    if (d.type === 'eq') {
+      html += `<div class="cmp-diff-row">
+        <div class="cmp-dc eq"><span class="ln">${ia}</span><span class="txt">${escH(d.a)}</span></div>
+        <div class="cmp-dc eq"><span class="ln">${ib}</span><span class="txt">${escH(d.b)}</span></div>
+      </div>`;
+    } else if (d.type === 'add') {
+      html += `<div class="cmp-diff-row">
+        <div class="cmp-dc empty"></div>
+        <div class="cmp-dc add"><span class="ln">+${ib}</span><span class="txt">${escH(d.b)}</span></div>
+      </div>`;
+    } else if (d.type === 'rem') {
+      html += `<div class="cmp-diff-row">
+        <div class="cmp-dc rem"><span class="ln">-${ia}</span><span class="txt">${escH(d.a)}</span></div>
+        <div class="cmp-dc empty"></div>
+      </div>`;
+    } else if (d.type === 'mod') {
+      const inl = inlineDiff(d.a, d.b);
+      html += `<div class="cmp-diff-row">
+        <div class="cmp-dc mod"><span class="ln">~${ia}</span><span class="txt">${inl.a}</span></div>
+        <div class="cmp-dc mod"><span class="ln">~${ib}</span><span class="txt">${inl.b}</span></div>
+      </div>`;
+    }
+  });
+  return html;
+}
+
+/* ── JS-aware analysis ── */
+function analyzeJS(codeA, codeB, diff) {
+  const fnRe = /(?:function\s+(\w+)|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\(|(\w+)\s*[:=]\s*(?:async\s*)?function)/g;
+  function getFns(code) {
+    const fns = new Set();
+    let m;
+    while ((m = fnRe.exec(code)) !== null) fns.add(m[1]||m[2]||m[3]);
+    fnRe.lastIndex = 0;
+    return fns;
+  }
+  const fnsA = getFns(codeA), fnsB = getFns(codeB);
+  const added = [...fnsB].filter(f => !fnsA.has(f));
+  const removed = [...fnsA].filter(f => !fnsB.has(f));
+  const kept = [...fnsA].filter(f => fnsB.has(f));
+
+  // var → const/let upgrades
+  const varUpgrades = [];
+  diff.forEach(d => {
+    if (d.type==='mod' && /\bvar\b/.test(d.a) && /\b(const|let)\b/.test(d.b))
+      varUpgrades.push({from:d.a.trim(), to:d.b.trim()});
+  });
+
+  // template literals
+  const tmplLit = diff.filter(d => d.type==='mod' && /\+/.test(d.a) && /`/.test(d.b)).length;
+
+  // arrow functions
+  const arrows = diff.filter(d => (d.type==='add'||d.type==='mod') && /=>/.test(d.b||'')).length;
+
+  // console.log removals
+  const consoleDrop = diff.filter(d => d.type==='rem' && /console\.log/.test(d.a)).length;
+
+  // comments added
+  const commentsAdded = diff.filter(d => d.type==='add' && /^\s*(\/\/|\/\*)/.test(d.b)).length;
+
+  return {added, removed, kept, varUpgrades, tmplLit, arrows, consoleDrop, commentsAdded};
+}
+
+/* ── Generate report HTML ── */
+function buildReport(diff, codeA, codeB, lang) {
+  const adds   = diff.filter(d => d.type==='add').length;
+  const rems   = diff.filter(d => d.type==='rem').length;
+  const mods   = diff.filter(d => d.type==='mod').length;
+  const equals = diff.filter(d => d.type==='eq').length;
+  const totalA = codeA.split('\n').length;
+  const totalB = codeB.split('\n').length;
+  const pctChange = Math.round((adds+rems+mods*2)/(totalA+totalB||1)*100);
+
+  let cards = '';
+
+  // Card: Linhas adicionadas
+  if (adds > 0) {
+    const items = diff.filter(d=>d.type==='add').slice(0,6).map(d=>
+      `<div class="cmp-ritem"><div class="cmp-ritem-dot" style="background:var(--gr)"></div><span>Linha +${(d.ib||0)+1}: <code>${escH((d.b||'').trim().slice(0,60))}${(d.b||'').trim().length>60?'…':''}</code></span></div>`
+    ).join('');
+    cards += rcard('➕','Linhas Adicionadas',adds,'var(--gr)','rgba(61,214,140,.15)',items+(adds>6?`<div class="cmp-ritem" style="color:var(--t2)"><div class="cmp-ritem-dot" style="background:var(--t3)"></div>… e mais ${adds-6} linha(s)</div>`:''));
+  }
+
+  // Card: Linhas removidas
+  if (rems > 0) {
+    const items = diff.filter(d=>d.type==='rem').slice(0,6).map(d=>
+      `<div class="cmp-ritem"><div class="cmp-ritem-dot" style="background:var(--rd)"></div><span>Linha -${(d.ia||0)+1}: <code>${escH((d.a||'').trim().slice(0,60))}${(d.a||'').trim().length>60?'…':''}</code></span></div>`
+    ).join('');
+    cards += rcard('➖','Linhas Removidas',rems,'var(--rd)','rgba(255,68,85,.15)',items+(rems>6?`<div class="cmp-ritem" style="color:var(--t2)"><div class="cmp-ritem-dot" style="background:var(--t3)"></div>… e mais ${rems-6} linha(s)</div>`:''));
+  }
+
+  // Card: Linhas modificadas
+  if (mods > 0) {
+    const items = diff.filter(d=>d.type==='mod').slice(0,5).map(d=>
+      `<div class="cmp-ritem"><div class="cmp-ritem-dot" style="background:var(--am)"></div><span>Linha ~${(d.ia||0)+1}: <code>${escH((d.a||'').trim().slice(0,40))}</code> → <code>${escH((d.b||'').trim().slice(0,40))}</code></span></div>`
+    ).join('');
+    cards += rcard('✏️','Linhas Modificadas',mods,'var(--am)','rgba(245,166,35,.15)',items+(mods>5?`<div class="cmp-ritem" style="color:var(--t2)"><div class="cmp-ritem-dot" style="background:var(--t3)"></div>… e mais ${mods-5} linha(s)</div>`:''));
+  }
+
+  // JS-specific analysis
+  if (lang === 'js') {
+    const js = analyzeJS(codeA, codeB, diff);
+
+    if (js.added.length || js.removed.length) {
+      let fnItems = '';
+      js.added.forEach(f => fnItems += `<div class="cmp-ritem"><div class="cmp-ritem-dot" style="background:var(--gr)"></div><span>Nova função: <code>${escH(f)}()</code></span></div>`);
+      js.removed.forEach(f => fnItems += `<div class="cmp-ritem"><div class="cmp-ritem-dot" style="background:var(--rd)"></div><span>Removida: <code>${escH(f)}()</code></span></div>`);
+      cards += rcard('⚙️','Funções',js.added.length+js.removed.length,'var(--bl)','rgba(91,156,246,.15)',fnItems);
+    }
+
+    const improveItems = [];
+    js.varUpgrades.forEach(u => improveItems.push(`<div class="cmp-ritem"><div class="cmp-ritem-dot" style="background:var(--ac)"></div><span><code>var</code> substituído por <code>${/\bconst\b/.test(u.to)?'const':'let'}</code> — melhor escopo e imutabilidade</span></div>`));
+    if (js.tmplLit) improveItems.push(`<div class="cmp-ritem"><div class="cmp-ritem-dot" style="background:var(--ac)"></div><span><strong>${js.tmplLit}</strong> concatenação(ões) substituída(s) por template literal</span></div>`);
+    if (js.arrows) improveItems.push(`<div class="cmp-ritem"><div class="cmp-ritem-dot" style="background:var(--ac)"></div><span><strong>${js.arrows}</strong> arrow function(s) adicionada(s)</span></div>`);
+    if (js.consoleDrop) improveItems.push(`<div class="cmp-ritem"><div class="cmp-ritem-dot" style="background:var(--gr)"></div><span><strong>${js.consoleDrop}</strong> chamada(s) de <code>console.log</code> removida(s) — código mais limpo</span></div>`);
+    if (js.commentsAdded) improveItems.push(`<div class="cmp-ritem"><div class="cmp-ritem-dot" style="background:var(--t2)"></div><span><strong>${js.commentsAdded}</strong> comentário(s) adicionado(s) — melhor documentação</span></div>`);
+
+    if (improveItems.length)
+      cards += rcard('🚀','Melhorias Detectadas',improveItems.length,'var(--ac)','rgba(0,212,176,.12)',improveItems.join(''));
+  }
+
+  // Summary
+  const delta = totalB - totalA;
+  const deltaStr = delta === 0 ? 'mesmo tamanho' : (delta > 0 ? `+${delta} linhas` : `${delta} linhas`);
+  const summary = `
+    <div class="cmp-rsummary">
+      <div class="cmp-rsummary-t">📊 Resumo Geral</div>
+      <div class="cmp-rsummary-body">
+        O código passou de <strong>${totalA}</strong> para <strong>${totalB}</strong> linhas (<strong>${deltaStr}</strong>).
+        Foram detectadas <strong>${adds}</strong> linha(s) adicionada(s), <strong>${rems}</strong> removida(s) e <strong>${mods}</strong> modificada(s),
+        com <strong>${equals}</strong> linha(s) inalterada(s).
+        O índice de mudança é de aproximadamente <strong>${pctChange}%</strong> do código total.
+        ${lang==='js' ? ` O código usa padrões ES6+ e segue boas práticas JavaScript.` : ''}
+      </div>
+    </div>`;
+
+  return `<div class="cmp-report-grid">${cards}</div>${summary}`;
+}
+
+function rcard(ic, title, count, color, bg, body) {
+  return `<div class="cmp-rcard">
+    <div class="cmp-rcard-h">
+      <span class="cmp-rcard-ic">${ic}</span>
+      <span class="cmp-rcard-title">${title}</span>
+      <span class="cmp-rcard-count" style="background:${bg};color:${color};border:1px solid ${color}33;">${count}</span>
+    </div>
+    <div class="cmp-rcard-body">${body}</div>
+  </div>`;
+}
+
+/* ── Main compare function ── */
+function runCompare() {
+  const codeA = document.getElementById('cmp-a').value;
+  const codeB = document.getElementById('cmp-b').value;
+  const lang = document.getElementById('cmp-lang').value;
+
+  if (!codeA.trim() && !codeB.trim()) return;
+
+  const linesA = codeA.split('\n');
+  const linesB = codeB.split('\n');
+  const diff = diffLines(linesA, linesB);
+
+  const adds   = diff.filter(d=>d.type==='add').length;
+  const rems   = diff.filter(d=>d.type==='rem').length;
+  const mods   = diff.filter(d=>d.type==='mod').length;
+  const equals = diff.filter(d=>d.type==='eq').length;
+
+  // Stats bar
+  document.getElementById('cmp-stats').innerHTML = `
+    <span class="cmp-stat cmp-stat-add">➕ ${adds} adicionada${adds!==1?'s':''}</span>
+    <span class="cmp-stat cmp-stat-rem">➖ ${rems} removida${rems!==1?'s':''}</span>
+    <span class="cmp-stat cmp-stat-mod">✏️ ${mods} modificada${mods!==1?'s':''}</span>
+    <span class="cmp-stat cmp-stat-eq">= ${equals} igual${equals!==1?'s':''}</span>
+    <span class="cmp-stat-sep"></span>
+    <button class="cmp-stat-dl" onclick="exportDiffReport()">⬇ Exportar Relatório</button>`;
+
+  // Diff HTML
+  document.getElementById('cmp-diff-body').innerHTML = buildDiffHTML(diff);
+
+  // Report HTML
+  document.getElementById('cmp-report-body').innerHTML = buildReport(diff, codeA, codeB, lang);
+
+  // Show results
+  document.getElementById('cmp-empty').style.display = 'none';
+  document.getElementById('cmp-results').style.display = 'flex';
+  document.getElementById('cmp-results').style.flexDirection = 'column';
+  document.getElementById('cmp-results').style.flex = '1';
+  document.getElementById('cmp-results').style.overflow = 'hidden';
+
+  // Stay on diff view
+  cmpView('diff');
+
+  // Store for export
+  window._cmpDiff = diff;
+  window._cmpCodeA = codeA;
+  window._cmpCodeB = codeB;
+  window._cmpLang = lang;
+}
+
+function cmpView(v) {
+  document.getElementById('cmp-diff-view').style.display   = v==='diff'   ? 'flex' : 'none';
+  document.getElementById('cmp-report-view').style.display = v==='report' ? 'block': 'none';
+  document.getElementById('vt-diff').classList.toggle('on', v==='diff');
+  document.getElementById('vt-report').classList.toggle('on', v==='report');
+  if (v==='diff') {
+    document.getElementById('cmp-diff-view').style.flexDirection='column';
+    document.getElementById('cmp-diff-view').style.flex='1';
+    document.getElementById('cmp-diff-view').style.overflow='hidden';
+  }
+}
+
+function cmpClear() {
+  document.getElementById('cmp-a').value = '';
+  document.getElementById('cmp-b').value = '';
+  cmpReset();
+}
+
+function cmpReset() {
+  document.getElementById('cmp-results').style.display = 'none';
+  document.getElementById('cmp-empty').style.display = 'flex';
+}
+
+function exportDiffReport() {
+  if (!window._cmpDiff) return;
+  const diff = window._cmpDiff;
+  const lang = window._cmpLang || 'generic';
+  const adds = diff.filter(d=>d.type==='add').length;
+  const rems = diff.filter(d=>d.type==='rem').length;
+  const mods = diff.filter(d=>d.type==='mod').length;
+  const equals = diff.filter(d=>d.type==='eq').length;
+  const now = new Date().toLocaleString('pt-BR');
+
+  let txt = `RELATÓRIO DE COMPARAÇÃO DE CÓDIGO — BINC v2.1\n`;
+  txt += `Gerado em: ${now}\n`;
+  txt += `Linguagem: ${lang.toUpperCase()}\n`;
+  txt += `${'═'.repeat(60)}\n\n`;
+  txt += `RESUMO\n`;
+  txt += `  Linhas adicionadas : ${adds}\n`;
+  txt += `  Linhas removidas   : ${rems}\n`;
+  txt += `  Linhas modificadas : ${mods}\n`;
+  txt += `  Linhas iguais      : ${equals}\n\n`;
+  txt += `${'═'.repeat(60)}\nDIFF DETALHADO\n${'─'.repeat(60)}\n`;
+  diff.forEach(d => {
+    if (d.type==='add')  txt += `+ [${(d.ib||0)+1}] ${d.b}\n`;
+    else if (d.type==='rem') txt += `- [${(d.ia||0)+1}] ${d.a}\n`;
+    else if (d.type==='mod') txt += `~ [${(d.ia||0)+1}→${(d.ib||0)+1}] ${d.a}  →→  ${d.b}\n`;
+  });
+
+  const blob = new Blob([txt], {type:'text/plain'});
+  dl(URL.createObjectURL(blob), `binc-diff-${Date.now()}.txt`);
+}

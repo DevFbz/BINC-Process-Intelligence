@@ -23,8 +23,9 @@
     <div class="nv" data-p="mapa" onclick="goTo('mapa',this)"><span class="nv-ic">🗺️</span><span class="nv-lb">Mapa de Campos</span></div>
     <div class="nv" data-p="fluxo" onclick="goTo('fluxo',this)"><span class="nv-ic">🔄</span><span class="nv-lb">Fluxo AS-IS</span></div>
     <div class="nv" data-p="script" onclick="goTo('script',this)"><span class="nv-ic">📝</span><span class="nv-lb">Script BPM</span></div>
-    <div class="nv" data-p="chat" onclick="goTo('chat',this)"><span class="nv-ic">🤖</span><span class="nv-lb">Binc IA</span></div>
+    <div class="nv" data-p="chat" onclick="goTo('chat',this)"><span class="nv-ic">🤖</span><span class="nv-lb">IA Binc</span></div>
     <div class="nv" data-p="ideias" onclick="goTo('ideias',this)"><span class="nv-ic">💡</span><span class="nv-lb">Ideias & Projetos</span></div>
+    <div class="nv" data-p="comp" onclick="goTo('comp',this)"><span class="nv-ic">⚡</span><span class="nv-lb">Comparador</span></div>
   </nav>
   <div class="sb-ft">v2.1 · Process Intelligence</div>
 </div>
@@ -50,9 +51,9 @@
           <div class="hc" onclick="goTo('mapa')"><div class="hc-i">🗺️</div><div class="hc-n">Mapa de Campos</div><div class="hc-d">Campos por etapa</div></div>
           <div class="hc" onclick="goTo('fluxo')"><div class="hc-i">🔄</div><div class="hc-n">Fluxo AS-IS</div><div class="hc-d">Fluxogramas</div></div>
           <div class="hc" onclick="goTo('script')"><div class="hc-i">📝</div><div class="hc-n">Script BPM</div><div class="hc-d">Template de script</div></div>
-          <div class="hc" onclick="goTo('chat')"><div class="hc-i">🤖</div><div class="hc-n">Binc IA</div><div class="hc-d">Expert em API JS</div></div>
+          <div class="hc" onclick="goTo('chat')"><div class="hc-i">🤖</div><div class="hc-n">IA Binc</div><div class="hc-d">Expert em API JS</div></div>
           <div class="hc" onclick="goTo('ideias')"><div class="hc-i">💡</div><div class="hc-n">Ideias & Projetos</div><div class="hc-d">Catálogo de melhorias</div></div>
-          <div class="hc" style="cursor:default;"><div class="hc-i">💾</div><div class="hc-n">Auto-save</div><div class="hc-d">Dados locais</div></div>
+          <div class="hc" onclick="goTo('comp')"><div class="hc-i">⚡</div><div class="hc-n">Comparador</div><div class="hc-d">Diff & relatório de código</div></div>
         </div>
       </div>
     </div>
@@ -145,7 +146,7 @@
       <div class="chat-header">
         <div class="chat-header-av">AI</div>
         <div class="chat-header-info">
-          <div class="chat-h-name">Binc IA BPM</div>
+          <div class="chat-h-name">IA Binc BPM</div>
           <div class="chat-h-status"><span class="chat-h-dot"></span>Expert em API JavaScript</div>
         </div>
         <button class="chat-clear" onclick="clearChat()">↺ Limpar conversa</button>
@@ -165,6 +166,82 @@
     <!-- IDEIAS -->
     <div id="p-ideias" class="pnl">
       <div class="iw" id="ilist"></div>
+    </div>
+
+    <!-- COMPARADOR -->
+    <div id="p-comp" class="pnl">
+      <div class="cmp-topbar">
+        <div class="cmp-top-info">
+          <span class="cmp-top-ic">⚡</span>
+          <div>
+            <div class="cmp-top-title">Comparador de Código</div>
+            <div class="cmp-top-sub">Cole dois trechos e veja as diferenças com relatório detalhado</div>
+          </div>
+        </div>
+        <div class="cmp-top-acts">
+          <select class="sel cmp-lang" id="cmp-lang" style="width:auto;padding:.3rem .6rem;font-size:.72rem;">
+            <option value="js">JavaScript</option>
+            <option value="generic">Genérico</option>
+          </select>
+          <button class="btn sm" onclick="cmpClear()">🗑 Limpar</button>
+          <button class="btn sm prim" onclick="runCompare()">⚡ Comparar</button>
+        </div>
+      </div>
+
+      <div class="cmp-editors">
+        <div class="cmp-editor-pane">
+          <div class="cmp-editor-header">
+            <span class="cmp-ver-badge cmp-ver-a">A</span>
+            <span class="cmp-editor-label">Versão Original</span>
+            <button class="cmp-clear-btn" onclick="document.getElementById('cmp-a').value='';cmpReset()">✕</button>
+          </div>
+          <textarea id="cmp-a" class="cmp-ta" placeholder="// Cole aqui o código original (versão antiga)&#10;&#10;function exemplo() {&#10;  var nome = 'João';&#10;  console.log(nome);&#10;}"></textarea>
+        </div>
+        <div class="cmp-divider">
+          <div class="cmp-divider-line"></div>
+          <div class="cmp-divider-icon">⇄</div>
+          <div class="cmp-divider-line"></div>
+        </div>
+        <div class="cmp-editor-pane">
+          <div class="cmp-editor-header">
+            <span class="cmp-ver-badge cmp-ver-b">B</span>
+            <span class="cmp-editor-label">Versão Nova</span>
+            <button class="cmp-clear-btn" onclick="document.getElementById('cmp-b').value='';cmpReset()">✕</button>
+          </div>
+          <textarea id="cmp-b" class="cmp-ta" placeholder="// Cole aqui o código novo (versão atualizada)&#10;&#10;function exemplo() {&#10;  const nome = 'João Silva';&#10;  console.log(`Olá, ${nome}`);&#10;}"></textarea>
+        </div>
+      </div>
+
+      <div id="cmp-results" style="display:none;">
+        <!-- Stats bar -->
+        <div class="cmp-stats" id="cmp-stats"></div>
+
+        <!-- View toggle -->
+        <div class="cmp-view-toggle">
+          <button class="cmp-vtbtn on" id="vt-diff" onclick="cmpView('diff')">⊞ Diff Visual</button>
+          <button class="cmp-vtbtn" id="vt-report" onclick="cmpView('report')">📋 Relatório</button>
+        </div>
+
+        <!-- DIFF VIEW -->
+        <div id="cmp-diff-view" class="cmp-diff-wrap">
+          <div class="cmp-diff-cols">
+            <div class="cmp-diff-header"><span class="cmp-ver-badge cmp-ver-a">A</span> Original</div>
+            <div class="cmp-diff-header"><span class="cmp-ver-badge cmp-ver-b">B</span> Nova</div>
+          </div>
+          <div class="cmp-diff-body" id="cmp-diff-body"></div>
+        </div>
+
+        <!-- REPORT VIEW -->
+        <div id="cmp-report-view" style="display:none;" class="cmp-report-wrap">
+          <div id="cmp-report-body"></div>
+        </div>
+      </div>
+
+      <div id="cmp-empty" class="cmp-empty">
+        <div class="cmp-empty-ic">⚡</div>
+        <div class="cmp-empty-t">Cole os dois códigos e clique em Comparar</div>
+        <div class="cmp-empty-s">O diff visual e o relatório aparecerão aqui</div>
+      </div>
     </div>
 
   </div>
