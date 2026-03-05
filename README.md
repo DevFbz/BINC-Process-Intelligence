@@ -33,7 +33,7 @@ Gerador de scripts JavaScript no **padrão LECOM** — preencha os campos e o c�
 - Nomenclatura correta: funções prefixadas, variáveis tipadas
 - Copiar para clipboard ou baixar como `.js`
 
-### 🤖 IA Lecom BPM
+### 🤖 IA Binc BPM
 Assistente conversacional especializado na **API JavaScript do Lecom BPM 5.50**.
 - Base de conhecimento com 27+ pares de perguntas e respostas
 - Cobre: Form API, campos, eventos, Grid, Autocomplete, máscaras, ProcessData, e mais
